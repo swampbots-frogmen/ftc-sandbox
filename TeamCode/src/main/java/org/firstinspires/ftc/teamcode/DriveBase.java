@@ -34,7 +34,7 @@ public class DriveBase extends LinearOpMode {
                 this.gamepad1.right_stick_x
             );
 
-            idMotors();
+            // idMotors();
         }
     }
 
@@ -65,15 +65,70 @@ public class DriveBase extends LinearOpMode {
 
     }
 
-    private void move(double lsy, double lsx, double rsy, double rsx) {
-        this.flPower = -lsy;
-        this.frPower = -lsy;
-        this.blPower = -lsy;
-        this.brPower = -lsy;
+    private String getStrafeDir(double lsy, double lsx, double rsy, double rsx) {
+        if ((lsy <= 0 && lsy >= -0.5 && lsx <= -0.3) && (rsy <= 0 && rsy >= -0.5 && rsx <= -0.3)) {
+            return "left";
+        }
 
-        fl.setPower(this.flPower);
-        fr.setPower(this.frPower);
-        bl.setPower(this.blPower);
-        br.setPower(this.brPower);
+        if ((lsy >= 0 && lsy <= 0.5 && lsx >= 0.3) && (rsy >= 0 && rsy <= 0.5 && rsx >= 0.3)) {
+            return "right";
+        }
+
+        return null;
+    }
+    private void move(double lsy, double lsx, double rsy, double rsx) {
+        // Left Motors
+        this.flPower = -lsy;
+        this.blPower = -lsy;
+
+        // Right Motors
+        this.frPower = -rsy;
+        this.brPower = -rsy;
+
+        String strafeDir = getStrafeDir(lsy, lsx, rsy, rsx);
+
+        telemetry.addData("LSY:", lsy);
+        telemetry.addData("LSX:", lsx);
+        telemetry.addData("RSY:", rsy);
+        telemetry.addData("RSX:", rsx);
+        telemetry.addData("FR Power:", this.frPower);
+        telemetry.addData("BR Power:", this.brPower);
+        telemetry.addData("FL Power:", this.flPower);
+        telemetry.addData("BL Power:", this.blPower);
+        telemetry.addData("Strafe Direction", strafeDir);
+
+        double avgVelocity;
+        if (strafeDir != null) {
+            double strafePower = (lsx + rsx) / 2;
+
+            if (strafeDir.equals("left")) {
+                telemetry.addData("Strafing Left", true);
+                // Left wheels inward, right wheels outward
+                fl.setPower(-strafePower);
+                bl.setPower(strafePower);
+                fr.setPower(strafePower);
+                br.setPower(-strafePower);
+            } else {
+                telemetry.addData("Strafing Right", true);
+                // Right wheels inward, left wheels outward
+                fl.setPower(strafePower);
+                bl.setPower(-strafePower);
+                fr.setPower(-strafePower);
+                br.setPower(strafePower);
+            }
+        } else if ((lsy < 0 && rsy < 0) || (lsy > 0 && rsy > 0)) {
+            avgVelocity = -((lsy + rsy) / 2);
+            fl.setPower(avgVelocity);
+            fr.setPower(avgVelocity);
+            bl.setPower(avgVelocity);
+            br.setPower(avgVelocity);
+        } else {
+            fl.setPower(this.flPower);
+            fr.setPower(this.frPower);
+            bl.setPower(this.blPower);
+            br.setPower(this.brPower);
+        }
+
+        telemetry.update();
     }
 }
