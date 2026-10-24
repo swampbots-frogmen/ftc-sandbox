@@ -8,9 +8,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.AutonomousSeperate.AutoPark;
-import org.firstinspires.ftc.teamcode.AutonomousSeperate.GrabSample;
-import org.firstinspires.ftc.teamcode.AutonomousSlideSetup.SetupPos;
+import org.firstinspires.ftc.teamcode.AutonomousSeperateDiscontinued.AutoPark;
+import org.firstinspires.ftc.teamcode.AutonomousSeperateDiscontinued.GrabSample;
+import org.firstinspires.ftc.teamcode.AutonomousSlideSetupDiscontinued.SetupPos;
 
 
 /**
@@ -22,7 +22,7 @@ import org.firstinspires.ftc.teamcode.AutonomousSlideSetup.SetupPos;
  * It is designed as a linear op mode, and uses RUN_TO_POSITION motor operation.
  *
  */
-@Autonomous()  // @TeleOp(...) is the other common choice
+//@Autonomous()  // @TeleOp(...) is the other common choice
 
 public class OldSTAscent extends LinearOpMode {//T = triangle Q = quadrilateral S = side
     // Declare Devices

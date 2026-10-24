@@ -29,8 +29,8 @@ public class Pathfinder {
     static double boardWidth = 144;//in 1in
     static double robotLength = 16.75;
     static double robotWidth = 16.75;
-    static double paddingX = robotWidth/2;   //robot length / 2   The extra * 2 is for the 9 on each side. so robot doesn't hit it. Adding 1 after for a safety margin
-    static double paddingY = robotLength/2;
+    static double paddingX = robotWidth/2 + 0.5;   //robot length / 2   The extra * 2 is for the 9 on each side. so robot doesn't hit it. Adding 1 after for a safety margin
+    static double paddingY = robotLength/2 + 0.5;
     static double robotStartPosX = 0;  //this is in terms of 1in
     static double robotStartPosY = 0;  //this is in terms of 1in
     static double robotStartPosHeading;
@@ -38,7 +38,7 @@ public class Pathfinder {
     static double robotCenterX = robotStartPosX + (robotWidth / 2);
     static double robotCenterY = robotStartPosY + (robotLength / 2);
 
-    static double nodeClearance = 3;//This spaces it slightly away from each rectangle so the nodes dont collide.
+    static double nodeClearance = 2;//This spaces it slightly away from each rectangle so the nodes dont collide.
 
 
     //temp
@@ -56,7 +56,7 @@ public class Pathfinder {
 
     static Rectangle centerHiveLeg1 = new Rectangle(51, 46, 39, 4);
     static Rectangle centerHiveLeg2 = new Rectangle(51, 94, 39, 4);
-    static Rectangle evilLine = new Rectangle(0, 72, 144, 0);
+    //static Rectangle evilLine = new Rectangle(0, 72, 144, 0);
     static Rectangle flower1 = new Rectangle(0, 44, 5, 6);
     static Rectangle flower2 = new Rectangle(44, 139, 6, 5);
     static Rectangle flower3 = new Rectangle(139, 92, 5, 6);
@@ -112,12 +112,33 @@ public class Pathfinder {
                 builder = builder.strafeToLinearHeading(new Vector2d(next.x, next.y), finalHeading);
             } else {
                 // Intermediate waypoints: face forward along travel direction
-                double pathHeading = Math.atan2(next.y - prev.y, next.x - prev.x);
-                builder = builder.strafeToLinearHeading(new Vector2d(next.x, next.y), pathHeading);
+                //double pathHeading = Math.atan2(next.y - prev.y, next.x - prev.x);
+                builder = builder.strafeToLinearHeading(new Vector2d(next.x, next.y),finalHeading);
             }
         }
 
         return builder.build();
+    }
+
+    public static Action pathfindDirectToCoords(double x, double y, double heading, Pose2d startingPos, MecanumDrive drive) {
+        targetX = x;
+        targetY = y;
+        targetCenterX = targetX + (targetWidth / 2);
+        targetCenterY = targetY + (targetLength / 2);
+
+        // Store direct path for telemetry and field map drawing
+        shortestPath.clear();
+        nodes.clear();
+        Node startNode = new Node(startingPos.position.x, startingPos.position.y);
+        Node targetNode = new Node(targetCenterX, targetCenterY);
+        nodes.add(startNode);
+        nodes.add(targetNode);
+        shortestPath.add(startNode);
+        shortestPath.add(targetNode);
+
+        double finalHeading = Math.toRadians(heading);
+        TrajectoryActionBuilder builder = drive.actionBuilder(startingPos);
+        return builder.strafeToLinearHeading(new Vector2d(targetCenterX, targetCenterY), finalHeading).build();
     }
 
     private static void buildMap() {
@@ -130,7 +151,7 @@ public class Pathfinder {
         StopRightBounds.clear();
         StopBottomBounds.clear();
 
-        getEStopBounds(topBoundary, rightBoundary, bottomBoundary, leftBoundary, centerHiveLeg1,centerHiveLeg2, evilLine, flower1, flower2, flower3, flower4,redGarden,blueGarden);
+        getEStopBounds(topBoundary, rightBoundary, bottomBoundary, leftBoundary, centerHiveLeg1,centerHiveLeg2, flower1, flower2, flower3, flower4,redGarden,blueGarden);
 
         //This sets node 0 to be the robot and node one to be the target, which is important for later.
         nodes.add(new Node(robotCenterX, robotCenterY)); //These two lines of code add nodes at the robot and target.

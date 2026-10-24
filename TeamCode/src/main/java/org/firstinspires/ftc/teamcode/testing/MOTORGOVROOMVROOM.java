@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 
-@Autonomous()
+//@Autonomous()
 public class MOTORGOVROOMVROOM extends LinearOpMode {
     DcMotor vroom = null;
     Servo funnyBOI = null;

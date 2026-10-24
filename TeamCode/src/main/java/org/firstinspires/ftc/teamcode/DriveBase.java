@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gyroscope;
 
-@TeleOp
+//@TeleOp
 public class DriveBase extends LinearOpMode {
     private DcMotor fl;
     private DcMotor fr;

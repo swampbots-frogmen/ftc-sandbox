@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="StarterBot Autonomous", group="StarterBot")
+//@Autonomous(name="StarterBot Autonomous", group="StarterBot")
 public class StarterBotAutonomous extends LinearOpMode {
     // Declare OpMode members.
     private DcMotor leftFrontDrive = null;
