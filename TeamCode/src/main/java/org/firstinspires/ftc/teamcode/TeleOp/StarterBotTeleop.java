@@ -31,6 +31,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 
 /*
  * This file includes a teleop (driver-controlled) file for the goBILDA® StarterBot with Mecanum
@@ -61,6 +62,7 @@ public class StarterBotTeleop extends OpMode {
     private CRServo leftIntakeServo = null;
     private CRServo rightIntakeServo = null;
     private CRServo windmillServo = null;
+    private Servo pollenRamp = null;
 
 
     /*
@@ -74,7 +76,7 @@ public class StarterBotTeleop extends OpMode {
      * enough to make a successful throw.
      */
     public final int LAUNCHER_TARGET_VELOCITY = 1265; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 1240; //2571 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 1250; //2571 RPM
 
 
     /*
@@ -110,6 +112,7 @@ public class StarterBotTeleop extends OpMode {
         windmillServo = hardwareMap.get(CRServo.class, "windmillServo");
         leftIntakeServo = hardwareMap.get(CRServo.class, "left_intake_servo");
         rightIntakeServo = hardwareMap.get(CRServo.class, "right_intake_servo");
+        pollenRamp = hardwareMap.get(Servo.class, "pollenramp");
 
         /*
          * To drive forward, most robots need the motor on one side to be reversed,
@@ -152,6 +155,8 @@ public class StarterBotTeleop extends OpMode {
         leftIntakeServo.setPower(0);
         rightIntakeServo.setPower(0);
         windmillServo.setPower(0);
+
+
 
         /*
          * Much like our drivetrain motors, we set the right intake servo to reverse so that both
@@ -213,6 +218,13 @@ public class StarterBotTeleop extends OpMode {
         intakePower = gamepad1.right_trigger - gamepad1.left_trigger;
 
         launch();
+
+        if(gamepad1.b){
+            pollenRamp.setPosition(1);
+        }
+        if(gamepad1.a){
+            pollenRamp.setPosition(0);
+        }
 
         /*
          * Here we set our intake motor and servos to their intake power. The order of operations
@@ -290,6 +302,7 @@ public class StarterBotTeleop extends OpMode {
          */
         if (gamepad1.right_bumper && launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
             windmillServo.setPower(1);
+            
             intakePower += 0.5;
         } else {
             windmillServo.setPower(0);

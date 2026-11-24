@@ -15,7 +15,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.AprilTagStuff.AprilTagVision;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 
 @Autonomous(name = "CloseToGarden")
@@ -28,18 +30,26 @@ public class CloseToGarden extends LinearOpMode {
     static double robotCenterX = robotStartPosX + (robotWidth / 2);
     static double robotCenterY = robotStartPosY + (robotLength / 2);
 
+    private AprilTagVision vision = null;
+
     private DcMotorEx launcher = null;
     private DcMotor intake = null;
     private CRServo leftIntakeServo = null;
     private CRServo rightIntakeServo = null;
     private CRServo windmillServo = null;
+    private Servo pollenRamp = null;
 
     private MecanumDrive drive = null;
     private Pathfinder pathfind = null;
     private Pose2d currentPose = null;
 
-    public final int LAUNCHER_TARGET_VELOCITY = 1265; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 1255; //2571 RPM
+    public final int LAUNCHER_TARGET_VELOCITY = 1245; //2678 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 1235; //2571 RPM
+
+    public final String RedAudience = "RED AUDIENCE";
+    public final String RedScoring = "RED SCORING";
+    public final String BlueAudience = "BLUE AUDIENCE";
+    public final String BlueScoring = "BLUE SCORING";
 
     public boolean velocityReached = false;
 
@@ -51,6 +61,7 @@ public class CloseToGarden extends LinearOpMode {
         windmillServo = hardwareMap.get(CRServo.class, "windmillServo");
         leftIntakeServo = hardwareMap.get(CRServo.class, "left_intake_servo");
         rightIntakeServo = hardwareMap.get(CRServo.class, "right_intake_servo");
+        pollenRamp = hardwareMap.get(Servo.class, "pollenramp");
 
         intake.setZeroPowerBehavior(BRAKE);
 
@@ -65,6 +76,16 @@ public class CloseToGarden extends LinearOpMode {
         rightIntakeServo.setDirection(DcMotorSimple.Direction.FORWARD);
         windmillServo.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        vision = new AprilTagVision(
+                hardwareMap,
+                -5.0,   // Forward offset (negative if mounted towards the back relative to center)
+                -7.0,   // Left offset (negative if left/right coordinate conventions require it)
+                17.25,  // Up offset (height of lens in inches)
+                180.0,  // Yaw (180 degrees because it's pointed at the back of the robot)
+                45.0,   // Pitch (45 degrees tilted up)
+                0.0     // Roll (0 if level sideways)
+        );
+
         Pose2d startingPose = new Pose2d(144-robotCenterX, robotCenterY+51.5, Math.toRadians(0));
 
         drive = new MecanumDrive(hardwareMap, startingPose);
@@ -73,33 +94,56 @@ public class CloseToGarden extends LinearOpMode {
 
         pathfind = new Pathfinder();
 
-        waitForStart();
+        while (!isStarted() && !isStopRequested()) {
+            telemetry.addData("Camera Status", "Warming up / Ready");
+            telemetry.addData("Red Audience Visible", vision.isTagVisible(RedAudience));
+            telemetry.addData("Blue Scoring Visible", vision.isTagVisible(BlueScoring));
+            telemetry.update();
+            sleep(20);
+        }
 
         if (isStopRequested()) return;
 
-        launch();
-
+        if (vision.detectWithRetries(this, BlueScoring, RedAudience)) {
+            launch();
+        }
+        pollenRamp.setPosition(1);
         // 1-line driving commands! If the value goes toward 0, just type 0. if it is 144, do 144-robotWidth or 144-robotLength.
         pathfindTo(115, 0, 0);
 
         startIntake();
 
-        driveDirectTo(144-robotLength+2, 0, 0);
+        driveDirectTo(144+7-robotLength, 0, 0);
         driveDirectTo(130-robotLength, 0, 0);
-        driveDirectTo(144-robotLength+2, 0, 0);
+        driveDirectTo(144+7-robotLength, 0, 0);
 
-        stopIntake();
 
-        pathfindTo(40, 35, 180);
 
-        pathfindTo(40, 54, 180);
+        pathfindTo(35, 30, 180);
+
+        pathfindTo(30, 54, 180);
 
         pathfindTo(0, 54, 180);
 
-
-        launch();
-
+        stopIntake();
+        if (vision.detectWithRetries(this, BlueAudience, RedScoring)) {
+            launch();
+        }
         driveDirectTo(10, 54, 180);
+//new
+   /*     pathfindTo(24, 43, 180);
+        pathfindTo(23, 43, 180);
+
+        startIntake();
+        pollenRamp.setPosition(0);
+        sleep(500);
+        driveDirectTo(0, 43, 180);
+
+        sleep(500);
+
+        driveDirectTo(10, 43, 180);
+        pollenRamp.setPosition(1);*/
+//back to old
         pathfindTo(20, 5, 180);
 
         while(!isStopRequested()){
@@ -119,7 +163,9 @@ public class CloseToGarden extends LinearOpMode {
          * holding down the right gamepad. If they are, then we want to start spinning up the launcher.
          * Otherwise, we start spinning the launcher down.
          */
-        while(!velocityReached) {
+        while(!velocityReached && opModeIsActive()) {
+
+
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
 
 
@@ -133,7 +179,7 @@ public class CloseToGarden extends LinearOpMode {
             if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
                 windmillServo.setPower(1);
                 velocityReached = true;
-                sleep(4000);
+                sleep(5000);
                 windmillServo.setPower(0);
                 launcher.setVelocity(0);
             } else {

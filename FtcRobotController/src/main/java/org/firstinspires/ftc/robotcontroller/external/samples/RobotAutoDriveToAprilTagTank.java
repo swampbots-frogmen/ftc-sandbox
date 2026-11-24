@@ -40,6 +40,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.Exposur
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
@@ -107,7 +108,7 @@ public class RobotAutoDriveToAprilTagTank extends LinearOpMode
     private static final int DESIRED_TAG_ID = -1;    // Choose the tag you want to approach or set to -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
-    private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
+    private AprilTagSingleDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
 
     @Override public void runOpMode()
     {
@@ -147,21 +148,19 @@ public class RobotAutoDriveToAprilTagTank extends LinearOpMode
             // Step through the list of detected tags and look for a matching tag
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
             for (AprilTagDetection detection : currentDetections) {
-                // Look to see if we have size info on this tag.
-                if (detection.metadata != null) {
-                    //  Check to see if we want to track towards this tag.
-                    if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                        // Yes, we want to use this tag.
-                        targetFound = true;
-                        desiredTag = detection;
-                        break;  // don't look any further.
+                if (detection instanceof AprilTagSingleDetection) {
+                    AprilTagSingleDetection single = (AprilTagSingleDetection) detection;
+                    if (single.metadata != null) {
+                        if ((DESIRED_TAG_ID < 0) || (single.id == DESIRED_TAG_ID)) {
+                            targetFound = true;
+                            desiredTag = single;
+                            break;
+                        } else {
+                            telemetry.addData("Skipping", "Tag ID %d is not desired", single.id);
+                        }
                     } else {
-                        // This tag is in the library, but we do not want to track it right now.
-                        telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
+                        telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", single.id);
                     }
-                } else {
-                    // This tag is NOT in the library, so we don't have enough information to track to it.
-                    telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
                 }
             }
 

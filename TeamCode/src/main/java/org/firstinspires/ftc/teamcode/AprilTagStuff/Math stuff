@@ -1,0 +1,632 @@
+So, using basic math, we have determined the starting positions of each april tag from a reference point.
+We assume that were only looking for april tags that are up. So first, we find coordinate positions
+of the starting april tags. These are the Blue shooter and Red audience respectively.
+Firstly, we find coords of the thing from a corner 0,0, 0 nearest to the up one. Given values, vector A <x,y(up),z>,
+we can determine basic starting coords. We are also given w1 = 5.00 in, l1 = 17.00 in, theta1 = 29.2 degrees, h1 = 41.1 in, and h2 = 12.0 in,
+we can find y up. h1 is the height from the bottom to the hinge. h2 is the length of the hinge to the bottom of the april tag.
+l1 is the length and w1 is the width of the April tag. theta1 is the reference angle measured that the hinge points.
+Since the april tag and h2 are both slanted, to find height, you need their sine values. Also, we are given something important.
+
+The reference angle of the april tag, specifically the rotation up and down according to the z axis, is 29.2 degrees. ofc, this is only its reference.
+
+To find y(up), use the formula h1 + h2sin(theta) + w1/2 sin(theta), we should get 48.1739650575 in, which for sig figs, is
+48.2 inches.
+
+To find x we need new terms. Define l2 as 1.00 in, l3 as 9.45 in, and l4 as 46.75 in.
+l2 is the length of the middle bar. l3 is the length from the bar to the end of the container on the x axis. l4 is the
+length from the stand, which is also the end of the container, to the nearest wall on the x axis.
+
+To find x, use the equation x = l4 + l3 + l2/2. This should give us around 56.7 in.
+
+Finally, we need to find z. we have to find a few more variables. We have w2 as 5.00 in and w3 as 51.00 in.
+w2 is the width from the april tag to the end of the container on the z axis. w3 is the length from the
+stand, which is also the end of the container, to the nearest wall on the z axis.
+
+Using the formula, z = w1/2 cos(theta1) + w2 cos(theta1) + w3. This should give us 57.5469155795 which is around 57.5 in.
+Therefore the reference for each side when up in accordance to the nearest corner is
+vector A = <56.7 in., 48.2 in., 57.5 in.>
+
+(Quick side note, to find the ydown, use the equation ydown = h1 - h2sin(theta1) - w1/2 sin(theta1). This will give us
+34.026349425, which is around 34.0 in. However, the april tag cant be detected easily when down, and should be ignored)
+
+Now ofc, this is in accordance to each wall. The top left corner is the one nearest to the blue audience. To find each one,
+yup is the same, and reference x and z are added when nearest corner is has 0 on that measurement, and subtracted from when 144.
+
+Blue Audience nearest corner = 0,0,0. Blue Audience pos = <56.7in., 48.2in., 57.5in.>.
+Red Audience nearest corner = 144,0,0. Red Audience pos = <87.3in., 48.2in., 57.5in.>. (Note 144in-56.7in = 87.3in.)
+Blue Scoring nearest corner = 0,0,144. Blue Scoring pos = <56.7in., 48.2in., 86.5in.> (Note that 144in-57.5in = 86.5in.)
+Red Scoring nearest corner = 144,0,144. Red Scoring pos = <87.3in., 48.2in., 86.5in.>
+
+Now of course, the april tag up down from z axis is 45 degrees above 0. However, for Red and Blue Scoring, the
+x left and right rotation on x and z axis is 180 degrees, facing away from 0,0,0.
+
+In a perfectly set scenario, the x up and down rotation should be 0. Ofc, that assumes perfect setup, but it is what we go with.
+
+Also, note that later on, the z axis becomes the x axis, and the current x axis becomes the y axis. This is bc roadrunner is weird.
+
+Now, the next step is going to be finding position on the board using these given values. We can get bearing, and distance from
+the april tag. So, we will use those values to find it. Preferably, it would be nice if we can get magnitude, yaw, pitch, and roll.
+Though, we dont want any roll in a perfect scenario.
+
+Ofc, these values are given with the april tag class. So, we will define 3 variables, magnitude, yaw, and pitch.
+Let M = sqrt(x^2 + y^2 + z^2). Let yaw = arctan(z/x) This is bc it starts from the starting angle and moves along the x and z coords, rotating the y axis.
+Let pitch = arctan(y/sqrt(x^2 + z^2). This is bc it starts from a certain point on the x coords, and not localized to z only. so we need a direct line, or sqrt(x^2 + z^2)
+in order for it to work. This rotates along the x axis. We cant derive roll, or z axis rotation, from one april tag. However, it is uneeded anyway.
+
+Now that we defined these three, use simple math to get your results. Here are the calculations:
+tan(pitch) = y/sqrt(x^2 + z^2)
+y = tan(pitch)sqrt(x^2 + z^2)
+
+tan(yaw) = z/x
+z = xtan(yaw)
+
+y = tan(pitch)sqrt(x^2 + (xtan(yaw))^2)
+y = tan(pitch)sqrt(x^2 + x^2tan^2(yaw))
+y = tan(pitch)sqrt(x^2(1+tan^2(yaw)))
+y = tan(pitch)xsqrt(sec^2(yaw)) (This is bc 1 + tan^2 = sec^2)
+y = xtan(pitch)sec(yaw)
+
+M = sqrt(x^2 + y^2 + z^2)
+M^2 = x^2 + y^2 + z^2
+y^2 = M^2 - x^2 - z^2
+y = sqrt(M^2 - x^2 - z^2)
+y = sqrt(M^2 - x^2 - (xtan(yaw))^2)
+y = sqrt(M^2 - x^2 - x^2tan^2(yaw))
+y = sqrt(M^2 - x^2(1+tan^2(yaw)))
+y = sqrt(M^2 - x^2sec^2(yaw))
+
+(Recall that y = xtan(pitch)sec(yaw) Therefore we can plug the other value (y = sqrt(M^2 - x^2sec^2(yaw)) in for y as well.)
+
+sqrt(M^2 - x^2sec^2(yaw)) = xtan(pitch)sec(yaw)
+M^2 - x^2sec^2(yaw) = x^2tan^2(pitch)sec^2(yaw)
+M^2 = x^2tan^2(pitch)sec^2(yaw) + x^2sec^2(yaw)
+M^2 = x^2sec^2(yaw)(tan^2(pitch) + 1)
+M^2 = x^2sec^2(yaw)sec^2(pitch)
+x^2 = M^2/sec^2(yaw)sec^2(pitch)
+x = M/sec(yaw)sec(pitch)
+x = Mcos(yaw)cos(pitch)  (Recall cos = 1/sec)
+
+Now we got the x value. Now plug in for z.
+x = Mcos(yaw)cos(pitch)
+
+z = xtan(yaw)
+z = Mcos(yaw)cos(pitch)tan(yaw)
+z = Mcos(pitch)cos(yaw)(sin(yaw)/cos(yaw))
+z = Mcos(pitch)sin(yaw)
+
+Now we got the z value. Now plug both x and z in for y.
+z = Mcos(pitch)sin(yaw)
+
+y = tan(pitch)sqrt(x^2 + z^2)
+y = tan(pitch)sqrt((Mcos(yaw)cos(pitch))^2 + (Mcos(pitch)sin(yaw))^2)
+y = tan(pitch)sqrt(M^2cos^2(yaw)cos^2(pitch) + M^2cos^2(pitch)sin^2(yaw))
+y = tan(pitch)sqrt(M^2cos^2(pitch)(cos^2(yaw) + sin^2(yaw))
+y = tan(pitch)Mcos(pitch)sqrt(1) (Recall cos^2 + sin^2 = 1)
+y = (sin(pitch)/cos(pitch))Mcos(pitch)
+y = Msin(pitch)
+
+Now we got the y value. But, double check the math as well just to be sure.
+y = Msin(pitch)
+
+M = sqrt(x^2 + y^2 + z^2)  (If the math is right, it should equal M on both sides)
+M = sqrt((Mcos(yaw)cos(pitch))^2 + (Msin(pitch))^2 + (Mcos(pitch)sin(yaw))^2)
+M = sqrt(M^2cos^2(yaw)cos^2(pitch) + M^2sin^2(pitch) + M^2cos^2(pitch)sin^2(yaw))
+M = sqrt(M^2(cos^2(yaw)cos^2(pitch) + sin^2(pitch) + cos^2(pitch)sin^2(yaw))
+M = Msqrt(sin^2(pitch) + cos^2(pitch)(cos^2(yaw) + sin^2(yaw)) (Remember again that sin^2 x + cos^2 x = 1)
+M = Msqrt(sin^2(pitch) + cos^2(pitch)(1))
+M = Msqrt(1)
+M = M
+
+There, so now we have our three values.
+
+x = Mcos(yaw)cos(pitch)
+y = Msin(pitch)
+z = Mcos(pitch)sin(yaw)
+
+Now there are a few final things to note.
+First of all, these values only give us distance away from the april tag in x, y, and z coords. However, we need to convert
+that into absolute coords on the board by using our previous measurements.
+
+Blue Audience nearest corner = 0,0,0. Blue Audience pos = <56.7in., 48.2in., 57.5in.>.
+Red Audience nearest corner = 144,0,0. Red Audience pos = <87.3in., 48.2in., 57.5in.>.
+Blue Scoring nearest corner = 0,0,144. Blue Scoring pos = <56.7in., 48.2in., 86.5in.>
+Red Scoring nearest corner = 144,0,144. Red Scoring pos = <87.3in., 48.2in., 86.5in.>
+
+theta1 = 29.2 degrees (April tag yaw)
+
+Also, this only gives us the absolute position of the webcam. So after all of this, we need to reposition the coords based on the robot center.
+However, there is one last thing to assume before that. Two of the april tags face the direction opposite of the board, and
+recall that the april tags are oriented at a certain yaw, alongside the camera. this can be accounted for through simple addition though.
+Thankfully though, the bearing of the robot is just its yaw.
+
+Also thankfully, we don't need to account for the april tag's pitch due to the april tag code already accounting for that.
+However, we still need to figure out pitch. Thankfully, we can exploit a simple vector trick for this.
+Like using the distributive property, 6 can be distributed to 3(2) as well.
+Similarly, say we have a vector <0,6,0>. This can be rewritten as 6<0,1,0>.
+Now, we can apply this to get our values accounting for the camera's pitch.
+
+We can define three vectors. R = <1,0,0> U = <0,1,0> F = <0,0,1>.
+R is the x axis motion, which is right/left. U is the y axis motion, or up and down, and F is the z axis motion, or forward/back.
+All three vectors are relative to camera position. So the cameras forward facing direction etc...
+Now, also note vector addition is simple. <1,0,0> + <0,1,0> = <1,1,0>.
+
+Therefore, we can define our vector like this xR + yU + zF.
+This gives us our new vector, which as of now is just <x,y,z>.
+Now, we can account for the change in pitch. Lets define phip as the amount of camera pitch.
+Since it rotates around the x axis, the x axis remains in place, being R = <1,0,0>.
+Now, lets define F. Imagine all axis rotating 45 degrees around F. Now F is pointing 45 degrees upward. (Recall F points in z direction)
+The vector F now extends into both the y axis and z axis at an angle phi. Therefore, its y component, assuming its length is 1,
+is sin(phip). And its z component, assuming a length of one, is cos(phip).
+Therefore, F = <0,sin(phip),cos(phip)>.
+Finally, we need to find U.
+U starts at 90 degrees and rotates, lets say 45 degrees. Therefore it would have its y as sin(45+90 = 135) and cos(135).
+However, with phi, we want to remove that 90. y = sin(90+phip) z = cos(90+phip).  Recall that sin(90-phip) = cos(phip).
+Same in reverse. And, cos(phip) = sin(90-phip)
+Therefore, 90+phip can be rewritten to sin(90+phip) = cos(90-(90+phip)) This is by adding a 90 to the beginning and negating the term in it.
+For example, say it just was theta = 90+phip.  sin(theta) = cos(90-theta) plug back in theta, then cos(90-(90+phip))
+Now reduce, and you get cos(-phip).
+Same thing for its cos, or z term. cos(90+phip) = sin(90-(90+phip)) = sin(-phip)
+Finally, using simple relationships, recall sin is an odd graph and cos is even. Therefore, cos(-phip) = cos(phip), and
+sin(-phip) = -sin(phip).
+Therefore, the final vector, U = <0,cos(phip),-sin(phip)>
+
+Now that we got our 3 vectors, go ahead and readd them together.
+xR + yU + zF = x<1,0,0> + y<0, cos(phip),-sin(phip)> + z<0,sin(phip),cos(phip)>
+= <x,0,0> + <0,ycos(phip),-ysin(phip)> + <0,zsin(phip),zcos(phip)>
+= <x, zsin(phip) + ycos(phip), zcos(phip) - ysin(phip)>
+
+However, we also need to account for yaw. This is bc the camera is facing backwards.
+Lets define yaw as phiy.
+
+Lets assume phiy rotates the x and z axis along a 45 degree incline (though in actuallity it is 180 degrees)
+Lets define phiy as the angle from the original x axis.
+Tilting 45 degrees, the x axis rotates <cos(phiy), 0, sin(phiy)> and the z axis rotates <cos(90+phiy), 0, sin(90+phiy)>
+This gives us <-sin(phiy), 0, cos(phiy)> (like we did earlier)
+
+Now, this helps us a little. First of all, since R is still <1,0,0>. We can just replace it with <cos(phiy),0,sin(phiy)>.
+This leaves us with F and U.
+Our F pitch was <0,sin(phip),cos(phip)>,
+and our F yaw is <-sin(phiy), 0, cos(phiy)>
+
+This is unfortunately a lot more difficult than the others. However it can still be found.
+
+First, remember that yaw is x z rotation.
+Lets define Fx as the x component of F yaw and Fz as the z component.
+Fx = -sin(phiy) Fz = cos(phiy) for now.
+sqrt(Fx^2 + Fz^2) = sqrt(sin^2(phiy) + cos^2(phiy)) = 1.
+
+Now we must understand pitch.
+Pitch moves up, having an adjacent side of cos(phip) and an opposite of (sin(phip)) We also must understand
+that it has a hypotenuse of 1.
+So, its horizontal direction must have the length
+H = cos(phip).
+
+Going back to the original, we must understand that Now, finding sin(phiy). We know it is sin(phiy) = -Fx/H
+(This is confusing at first. Remember Fx originally was -sin(phiy). Therefore, sin(phiy) = -Fx.
+At this time, sin(phiy) = -Fx/1.  However this assumed that there was no pitch, and the hypotenuse goes to one.
+However, in this, the hypotenuse is not one but rather H)
+Hsin(phiy) = - Fx.
+Fx = -Hsin(phiy).
+Fx = -cos(phip)sin(phiy)
+Now we got Fx. Same thing for Fz.
+Fz/1 = cos(phiy) before. Now, cos(phiy) = Fz/H.
+Fz = Hcos(phiy)
+Fz = cos(phip)cos(phiy).
+
+And since Fy is unaffected, it remains the same, sin(phip). (If you wonder why, remember pitch is y/sqrt(x^2 + z^2)
+In this, y is unaffected by it, however, x and z are both affected by each other.)
+
+Therefore, our final vector is this.
+<Fx,Fy,Fz>
+= <-cos(phip)sin(phiy), sin(phip), cos(phip)cos(phiy)>
+
+If U was untouched here, it has a vector of <0,cos(phip),-sin(phip)>.
+However, it now has a z component to it. Unfortunately.
+Therefore we have to do this as well.
+Let Ux = 0 and Uz = -sin(phip) for now.
+The Horizontal hypotenuse H = sqrt(Ux^2 + Uz^2) = sqrt(0 + (-sin(phip))^2) = sqrt(sin^2(phip)) = sin(phip).
+
+Now, remember these terms earlier?
+Fx = -Hsin(phiy).
+Fz = Hcos(phiy)
+Use similar steps to derive this (The difference is that since H is determined by the y and sqrt(x^2 + z^2), and for F, it went from 1 to cos(phip),\
+We already have our y applied to U, and therefore we have sin(phip). Also, note that the original horizontal magnitude was 0 anyway, so it goes from 0 to sin(phip)).
+Ux = Hsin(phiy)
+Uz = -Hcos(phiy)
+Ux = sin(phip)sin(phiy)
+Uz = -sin(phip)cos(phiy)
+U = <sin(phip)sin(phiy),cos(phip),-sin(phip)cos(phiy)>
+
+
+
+(If I had to put this in simple terms, you keep y the same and scale the x and z by the pitches z term. bc the
+z affects the total hypotenuse for both x and z in yaw. Instead of equaling one, it equals cos(phip) another way of writing it
+is this. H = Fx/-sin(phiy) when H = 1, Fx = -sin(phiy). When it equals cos(phip), Fx - -sin(phiy)cos(phip). This scales with z too
+for the exact same reason)
+
+Now, lets get our final vector equations.
+
+R = <cos(phiy),0,sin(phiy)>
+U = <sin(phip)sin(phiy),cos(phip),-sin(phip)cos(phiy)>
+F = <-cos(phip)sin(phiy), sin(phip), cos(phip)cos(phiy)>
+
+Equation: xR + yU + zF
+
+x<cos(phiy),0,sin(phiy)> + y<sin(phip)sin(phiy),cos(phip),-sin(phip)cos(phiy)> + z<-cos(phip)sin(phiy),sin(phip),cos(phip)cos(phiy)>
+<xcos(phiy),0,xsin(phiy)> + <ysin(phip)sin(phiy),ycos(phip),-ysin(phip)cos(phiy)> + <-zcos(phip)sin(phiy), zsin(phip), zcos(phip)cos(phiy)>
+<(xcos(Phiy) + ysin(phip)sin(phiy) - zcos(phip)sin(phiy)), (ycos(phip) + zsin(phip)), (xsin(phiy) - ysin(phip)cos(phiy) + zcos(phip)cos(phiy))>
+
+x = Mcos(yaw)cos(pitch)
+y = Msin(pitch)
+z = Mcos(pitch)sin(yaw)
+
+Therefore, the final, completely localized vector, given camera offsets of yaw and pitch, is this.
+
+<(Mcos(yaw)cos(pitch)cos(Phiy) + Msin(pitch)sin(phip)sin(phiy) - Mcos(pitch)sin(yaw)cos(phip)sin(phiy)), (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip)), (Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip)cos(phiy) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))>
+
+x' = Mcos(yaw)cos(pitch)cos(Phiy) + Msin(pitch)sin(phip)sin(phiy) - Mcos(pitch)sin(yaw)cos(phip)sin(phiy))
+y' = (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip))
+z' = (Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip)cos(phiy) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))
+
+Now to translate to a real pose.
+*Note this is wrong rn due to inconsistencies earler that i fixed. However, I will skip this and go back.*
+Blue Audience nearest corner = 0,0,0. Blue Audience pos = <56.7in., 48.2in., 57.5in.>.
+Red Audience nearest corner = 144,0,0. Red Audience pos = <87.3in., 48.2in., 57.5in.>.
+Blue Scoring nearest corner = 0,0,144. Blue Scoring pos = <56.7in., 48.2in., 86.5in.>
+Red Scoring nearest corner = 144,0,144. Red Scoring pos = <87.3in., 48.2in., 86.5in.>
+
+Now, since Blue audience is closest to 0,0,0, then we can set that as the origin of the graph.
+Blue scoring goes out in the positive z direction, being right of the origin.
+Red audience goes forward the graph in the positive x direction. Pretty much, this just indicates whether
+we need to subtract or add each value to them.
+
+First of all, y is always subtracted. so the y value is subtracted from each.
+so it is always (48.2 - (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip)))in.
+This is bc the pitch is positive, but the angle of pitch is from the lower object. It would be added to if it was from the tag.
+Same goes for both z and x values.
+This is bc we are determining it from the robot and not the april tag. Since we are measuring from it, imagine this scenario.
+The camera is at x = 80 and the tag is x = 100. Since the camera is 20 to the left of the tag, imagine the camera perspective.
+The april tag is 20 to the right. therefore i must move positive 20 to reach it. However, from the april tags, pos, in order
+to reach it, it must move -20. So it subtracts to reach it.
+So, therefore, we have to subtract from all. Or in other words, just describe each one as two vectors.
+
+Blue Audience pos = <56.7in., 48.2in., 57.5in.> - <(Mcos(yaw)cos(pitch)cos(Phiy)
+- Mcos(pitch)sin(yaw)cos(phip)sin(phiy)), (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip)),
+(Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))>
+
+Red Audience pos = <87.3in., 48.2in., 57.5in.> - <(Mcos(yaw)cos(pitch)cos(Phiy) -
+Mcos(pitch)sin(yaw)cos(phip)sin(phiy)), (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip)),
+(Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))>
+
+Blue Scoring pos = <56.7in., 48.2in., 86.5in.> - <(Mcos(yaw)cos(pitch)cos(Phiy) -
+Mcos(pitch)sin(yaw)cos(phip)sin(phiy)), (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip)),
+(Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))>
+
+Red Scoring pos = <87.3in., 48.2in., 86.5in.> - <(Mcos(yaw)cos(pitch)cos(Phiy) -
+Mcos(pitch)sin(yaw)cos(phip)sin(phiy)), (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip)),
+(Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))>
+*Everything after here is correct*
+Thankfully, most of the heavy lifting is done. NEVERMIND >:(
+
+
+
+x' = Mcos(yaw)cos(pitch)cos(Phiy) + Msin(pitch)sin(phip)sin(phiy) - Mcos(pitch)sin(yaw)cos(phip)sin(phiy))
+y' = (Msin(pitch)cos(phip) + Mcos(pitch)sin(yaw)sin(phip))
+z' = (Mcos(yaw)cos(pitch)sin(phiy) - Msin(pitch)sin(phip)cos(phiy) + Mcos(pitch)sin(yaw)cos(phip)cos(phiy))
+
+Here is the final equation for x y and z.
+
+Now, we will go on back to our vectors.
+R = <cos(phiy),0,sin(phiy)>
+U = <sin(phip)sin(phiy),cos(phip),-sin(phip)cos(phiy)>
+F = <-cos(phip)sin(phiy), sin(phip), cos(phip)cos(phiy)>
+We will subscript for c, which means camera.
+Rc = <cos(phiy),0,sin(phiy)>
+Uc = <sin(phip)sin(phiy),cos(phip),-sin(phip)cos(phiy)>
+Fc = <-cos(phip)sin(phiy), sin(phip), cos(phip)cos(phiy)>
+
+Now, lets define 3 new variables, Ft,Rt,and Ut, meaning the same thing but for tags.
+And, lets define 2 new angles thetap, which is tag pitch, and thetay, which is tag yaw.
+
+Now, Ft,Rt,andUt are identical to Rc,Uc, and Fc, but they have different variables.
+
+Rt = <cos(thetay),0,sin(thetay)>
+Ut = <sin(thetap)sin(thetay),cos(thetap),-sin(thetap)cos(thetay)>
+Ft = <-cos(thetap)sin(thetay), sin(thetap), cos(thetap)cos(thetay)>
+
+We want to multiply the two vectors together now. For this, we use dot product. A*B = AxBx + AyBy + AzBz.
+Or, if you do it polarly, A*B abs(A)abs(B)cos(aleph) where aleph is the angle in between. Now, if we assume
+both vectors have a length of 1, then AB = cos(aleph). Therefore, we can find the angle between by multiplying vector
+A and B together, which also gives us the amount the tag points. Therefore.
+
+Ftc = <Ft*Rc, Ft*Uc,Ft*Fc>
+Rtc = <Rt*Rc,Rt*Uc,Rt*Fc>
+Utc = <Ut*Rc,Ut*Uc,Ut*Fc>
+
+These give us the correct alignment and can be used for the final equation.
+Ftc = <Ft*Rc, Ft*Uc,Ft*Fc>
+Ft*Rc = FtxRcx + FtyRcy + FtzRcz =
+-cos(thetap)sin(thetay)cos(phiy) + sin(thetap)0 + cos(thetap)cos(thetay)sin(phiy) =
+-cos(thetap)sin(thetay)cos(phiy) + cos(thetap)cos(thetay)sin(phiy) or
+
+FtRc = cos(thetap)cos(thetay)sin(phiy) - cos(thetap)sin(thetay)cos(phiy)
+= cos(thetap)(cos(thetay)sin(phiy) - sin(thetay)cos(phiy))
+sin(A-B) = sin(A)cos(B) - sin(B)cos(A)
+
+FtRc = cos(thetap)sin(phiy-thetay)
+
+FtUc = -cos(thetap)sin(thetay)sin(phip)sin(phiy) + sin(thetap)cos(phip) + -sin(phip)cos(phiy)cos(thetap)cos(thetay)
+ = sin(thetap)cos(phip) - cos(thetap)sin(thetay)sin(phip)sin(phiy) - sin(phip)cos(phiy)cos(thetap)cos(thetay)
+ = sin(thetap)cos(phip) - sin(phip)cos(thetap)(sin(thetay)sin(phiy) + cos(phiy)cos(thetay))
+  = sin(thetap)cos(phip) - sin(phip)cos(thetap)(cos(phiy)cos(thetay) + sin(thetay)sin(phiy))
+
+ FtUc = sin(thetap)cos(phip) - sin(phip)cos(thetap)(cos(phiy-thetay))
+
+
+FtFc = <-cos(thetap)sin(thetay), sin(thetap), cos(thetap)cos(thetay)> * <-cos(phip)sin(phiy), sin(phip), cos(phip)cos(phiy)> =
+= -cos(thetap)sin(thetay)-cos(phip)sin(phiy) + sin(thetap)sin(phip) + cos(phip)cos(phiy)cos(thetap)cos(thetay)
+= sin(thetap)sin(phip) + cos(phip)cos(phiy)cos(thetap)cos(thetay) + cos(thetap)sin(thetay)cos(phip)sin(phiy)
+= sin(thetap)sin(phip) + cos(phip)cos(thetap)(cos(phiy)cos(thetay) + sin(thetay)sin(phiy))
+
+= sin(thetap)sin(phip) + cos(phip)cos(thetap)(cos(phiy-thetay))
+
+
+
+Ftc = <cos(thetap)sin(phiy-thetay),
+       sin(thetap)cos(phip) - sin(phip)cos(thetap)(cos(phiy-thetay)),
+       sin(thetap)sin(phip) + cos(phip)cos(thetap)(cos(phiy-thetay))>
+
+
+
+       Rtc = <Rt*Rc,Rt*Uc,Rt*Fc>
+
+RtRc = cos(phiy)cos(thetay) + 0 + sin(phiy)sin(thetay)
+= cos(phiy)cos(thetay) + sin(phiy)sin(thetay)
+
+RtRc = cos(phiy-thetay)
+
+RtUc = cos(thetay)sin(phip)sin(phiy)+ 0 - sin(phip)cos(phiy)sin(thetay)
+= cos(thetay)sin(phip)sin(phiy) - sin(phip)cos(phiy)sin(thetay)
+= sin(phip)(cos(thetay)sin(phiy) - cos(phiy,sin(thetay))
+
+RtUc = sin(phip)sin(phiy-thetay)
+
+RtFc = -cos(phip)sin(phiy)cos(thetay) + 0 + sin(thetay)cos(phip)cos(phiy)
+= sin(thetay)cos(phip)cos(phiy) - cos(phip)sin(phiy)cos(thetay)
+= cos(phip)(sin(thetay)cos(phiy) - sin(phiy)cos(thetay))
+
+= cos(phip)sin(thetay-phiy)
+
+Rtc = <cos(phiy-thetay),
+       sin(phip)sin(phiy-thetay),
+       cos(phip)sin(thetay-phiy)>
+
+
+
+
+
+
+       Utc = <Ut*Rc,Ut*Uc,Ut*Fc>
+
+  UtRc = sin(thetap)sin(thetay)<cos(phiy) + 0 - sin(thetap)cos(thetay)sin(phiy)
+  = sin(thetap)(sin(thetay)<cos(phiy) - cos(thetay)sin(phiy))
+
+  UtRc = sin(thetap)(sin(thetay-phiy))
+
+
+  UtUc = sin(thetap)sin(thetay)sin(phip)sin(phiy) + cos(thetap)cos(phip) + sin(thetap)cos(thetay)sin(phip)cos(phiy)
+  = cos(thetap)cos(phip) + sin(thetap)sin(phip)(sin(thetay)sin(phiy) + cos(thetay)cos(phiy))
+
+  UtUc = cos(thetap)cos(phip) + sin(thetap)sin(phip)cos(phiy-thetay)
+
+  UtFc = -cos(phip)sin(phiy)sin(thetap)sin(thetay) + sin(phip)cos(thetap) - sin(thetap)cos(thetay)cos(phip)cos(phiy)
+  = sin(phip)cos(thetap) - sin(thetap)cos(phip)(cos(thetay)cos(phiy) + sin(phiy)sin(thetay))
+
+  UtFc= sin(phip)cos(thetap) - sin(thetap)cos(phip)cos(phiy-thetay)
+
+Utc = <sin(thetap)(sin(thetay-phiy)),
+       cos(thetap)cos(phip) + sin(thetap)sin(phip)cos(phiy-thetay),
+       sin(phip)cos(thetap) - sin(thetap)cos(phip)cos(phiy-thetay)>
+
+Now we have all of our position vectors again.
+
+Rtc = <cos(phiy-thetay),
+       sin(phip)sin(phiy-thetay),
+       cos(phip)sin(thetay-phiy)>
+
+Utc = <sin(thetap)(sin(thetay-phiy)),
+       cos(thetap)cos(phip) + sin(thetap)sin(phip)cos(phiy-thetay),
+       sin(phip)cos(thetap) - sin(thetap)cos(phip)cos(phiy-thetay)>
+
+Ftc = <cos(thetap)sin(phiy-thetay),
+       sin(thetap)cos(phip) - sin(phip)cos(thetap)(cos(phiy-thetay)),
+       sin(thetap)sin(phip) + cos(phip)cos(thetap)(cos(phiy-thetay))>
+
+Recall Equation: xR + yU + zF.
+xRtc + yUtc + zFtc =
+x<cos(phiy-thetay),
+sin(phip)sin(phiy-thetay),
+cos(phip)sin(thetay-phiy)> +
+y<sin(thetap)(sin(thetay-phiy)),
+cos(thetap)cos(phip) + sin(thetap)sin(phip)cos(phiy-thetay),
+sin(phip)cos(thetap) - sin(thetap)cos(phip)cos(phiy-thetay)> +
+z<cos(thetap)sin(phiy-thetay),
+sin(thetap)cos(phip) - sin(phip)cos(thetap)(cos(phiy-thetay)),
+sin(thetap)sin(phip) + cos(phip)cos(thetap)(cos(phiy-thetay))> =
+
+<xcos(phiy-thetay),x(phip)sin(phiy-thetay),xcos(phip)sin(thetay-phiy)> +
+<ysin(thetap)(sin(thetay-phiy)),ycos(thetap)cos(phip) + ysin(thetap)sin(phip)cos(phiy-thetay),ysin(phip)cos(thetap) - ysin(thetap)cos(phip)cos(phiy-thetay)> +
+<zcos(thetap)sin(phiy-thetay),zsin(thetap)cos(phip) - zsin(phip)cos(thetap)(cos(phiy-thetay)),zsin(thetap)sin(phip) + zcos(phip)cos(thetap)(cos(phiy-thetay))>
+=
+<xcos(phiy-thetay) + ysin(thetap)(sin(thetay-phiy)) + zcos(thetap)sin(phiy-thetay),
+x(phip)sin(phiy-thetay) + ycos(thetap)cos(phip) + ysin(thetap)sin(phip)cos(phiy-thetay) + zsin(thetap)cos(phip) - zsin(phip)cos(thetap)(cos(phiy-thetay)),
+xcos(phip)sin(thetay-phiy) + ysin(phip)cos(thetap) - ysin(thetap)cos(phip)cos(phiy-thetay) + zsin(thetap)sin(phip) + zcos(phip)cos(thetap)(cos(phiy-thetay))>
+
+x = Mcos(yaw)cos(pitch)
+y = Msin(pitch)
+z = Mcos(pitch)sin(yaw)
+
+final x =
+Mcos(yaw)cos(pitch)cos(phiy-thetay) + Msin(pitch)sin(thetap)(sin(thetay-phiy)) +
+Mcos(pitch)sin(yaw)cos(thetap)sin(phiy-thetay)
+
+final y =
+ Mcos(yaw)cos(pitch)sin(phip)sin(phiy-thetay) + Msin(pitch)cos(thetap)cos(phip) +
+ Msin(pitch)sin(thetap)sin(phip)cos(phiy-thetay) + Mcos(pitch)sin(yaw)sin(thetap)cos(phip) -
+ Mcos(pitch)sin(yaw)sin(phip)cos(thetap)(cos(phiy-thetay))
+
+ final z =
+ Mcos(yaw)cos(pitch)cos(phip)sin(thetay-phiy) + Msin(pitch)sin(phip)cos(thetap) -
+ Msin(pitch)sin(thetap)cos(phip)cos(phiy-thetay) + Mcos(pitch)sin(yaw)sin(thetap)sin(phip) +
+ Mcos(pitch)sin(yaw)cos(phip)cos(thetap)(cos(phiy-thetay))
+
+All of this, where M = magnitude, pitch = calculated pitch, yaw = calculated yaw,
+phip = pitch offset of camera, phiy = yaw offset of camera,
+thetap = pitch offset of april tag, thetay = yaw offset of april tag.
+
+Now, lets find the actual pos of the robot camera.
+Due to simplification, I will denote the final x as fix, the final y
+as fiy, and the final z as fiz.
+
+Blue Audience pos = <56.7in. - fix, 48.2in. - fiy, 57.5in. - fiz>
+Red Audience pos = <87.3in. - fix, 48.2in. - fiy, 57.5in. - fiz>
+Blue Scoring pos = <56.7in. - fix, 48.2in. - fiy, 86.5in. - fiz>
+Red Scoring pos = <87.3in. - fix, 48.2in. - fiy, 86.5in. - fiz>
+
+This should now give us the precise coords of the robot on a 3D plane.
+Now there is only one more thing to do. That is fix camera offset. Since
+the camera won't be at the center, it will have to be moved towards the center
+based on displacement of the camera to center.
+However, this does not need to be added into our final equation just yet,
+but can be added after retrieving camera pos.
+
+Lets define cx, cy, and cz.
+Let cx = tagPosX - fix, cy = tagPosY - fiy, and cz = tagPosZ - fiz.
+These will be the camera position of x, y, and z. tagPosX is
+the X vector of one of the four tag poses, and same as tagPosY and
+tagPosZ, but for their respective coords.
+
+Now, lets assume cx,cy,and cz are the camera pos. Now lets find the real pos on the xyz graph.
+First of all, we dont need y, since we only care about x and z coords. So we can just ignore cy.
+Second, we can determine x and z in quite an interesting way. imagine taking a line from the center of the
+robot and projecting it along the xz plane to the camera xz coords. Now, imagine the robot is at a certain bearing,
+that bearing will rotate the camera around a circle. Therefore, if we find the magnitude between the two coords, the x
+and z can be determined by Magnitude and cos or sin of theta, where theta is yaw or bearing of the robot.
+However, what if your camera is already at an angle. Simply put, just flip the axis of the xz to match the robot.
+Since we are only dealing with x and z coords now, we can assume simple 2D kinematics, as there is no y motion involved in
+this.
+
+To get Magnitude, do sqrt(x^2 + z^2) where x = cx - distanceToCenterX, and z = cz - distanceToCenterZ.
+Of course, in this, assume you are basing it off the front of the robot, when yaw = 0. And, assume that
+you are along your quadrant for positive values. If the camera is on the front of the robot, then
+distanceToCenterZ = negative value. The reason is bc my relative Quadrant is quadrant 4. Except both are positive
+there. The top left corner is (0,0,0), and the bottom right is (144,0,144). You must account for that. Therefore positive
+for me is down and to the right from center.
+
+Now, assuming you have magnitude, it is easy to determine your value. However, note that magnitude will be changed later.
+This is bc we are assuming 0 yaw offset rn.
+It is just Mcos(yaw2),Msin(yaw2). The sin is the z direction, and the cos is the x direction. yaw2 is a new variable,
+defined by true bearing. To get this, we use the yaw equation from earlier with our cx, cz values.
+
+yaw2 now can be found simply by using addition of angles, since it is 2D kinematics.
+Firstly, you need your calculated yaw from earlier. That was yaw. Second, you need your camera offset yaw. That was phiy.
+Third, you need your tag offset yaw. That was thetay. Finally, since it is all 2D kinematics, you just add. Therefore,
+we need to figure out a scenario to base our equation on. Say the april tag is facing toward thetay = 0 degrees.
+Now, say the camera is facing toward the april tag. it reads yaw = 180 degrees. therefore, the camera has a 180 degrees
+direction it is looking. So, add thetay + yaw. However, now assume the camera yaw is 180 degrees of the robot.
+Therefore, the robots real orientation is 0 degrees. Therefore, subtract or add phiy.
+
+yaw2 = thetay + yaw + phiy
+
+Now though, this is an example with 180 degrees. In order to determine whether to subtract or add, we need fancy degrees.
+Lets assume your tag is facing 45 degrees. Assume your camera also reads 45 degrees in yaw. Draw a picture and visualize it.
+Since the camera must have a positive 45 degree angle from the tag. From the direction your tag is facing, it moves down
+45 degrees. Therefore, instead of adding you do thetay - yaw. Though, this may change depending if the angle is measured
+clockwise or counterclockwise. Finally, assume the camera is mounted 45 degrees(measured counterclockwise) of the robot.
+Now, it looks like the robots yaw is -45 on the drawing. Therefore, subtract phiy.
+
+yaw2 = thetay - yaw - phiy or
+yaw2 = thetay + yaw - phiy depending on whether it is detected clockwise or counterclockwise.
+
+Finally, we need to rotate the x z coord plane back to the original one. Finally, we need to flip it back to its original pos.
+Since this is 2d kinematics instead of 3D, this becomes relatively simple.
+cYawOffset = atan2(distanceToCenterZ/distanceToCenterX)
+
+Since it is 2D kinematics, we can just add/subtract it from the current yaw2.
+Therefore, it is
+Mcos(yaw2+cYawOffset) Now, when yaw2 = 0, and lets say cYawOffset = 45 degrees. (Just a test number)
+When yaw2 = 0, it is Mcos(45). see. This is saying that the x z values you recieved have a total magnitude, but also
+are determined by what degree it alr is.
+
+When cx = absolute cameraPosX, cz = absolute CameraPosZ, distanceToCenterX = the measured distance from center to camera
+along x, distanceToCenterZ = distance from center to camera along z, final x = distance from robot to tag x, final z =
+distance from robot to tag z.
+
+TrueXCoord = Mcos(yaw2 + cYawOffset)
+
+
+ TrueZCoord = Msin(yaw2 + cYawOffset)
+
+ Now we got to fix M.
+ recall M = sqrt(x^2 + y^2) = sqrt((cx - distanceToCenterX)^2 + (cz - distanceToCenterZ)^2)
+ This assumes perfect yaw. However, when yaw is 90 degrees, rather than subtracting, you actually add.
+ Therefore we have sqrt((cx - distanceToCenterXcos(theta))^2 + (cz - distanceToCenterZsin(theta))^2)
+ But theta is unknown rn. So what do we do?
+ First of all, you could solve it by just measuring. Therefore, since that is easiest, we will ignore translations,
+ and solve it manually.
+ But, that actually changes our equation. instead, just do this. sqrt(distanceToCenterX^2 + distanceToCenterZ^2)
+ In this, you ignore any rotations, measure the distance, and take its magnitude. No need to overcomplicate it.
+ However, again, this changes our equation. Instead of doing all that, we are finding true x and z offset.
+
+ So, simple fix. Relabel these TrueXCoord = Mcos(yaw2 + cYawOffset), TrueZCoord = Msin(yaw2 + cYawOffset)
+ to these.
+ TrueXDistance = Mcos(yaw2 + cYawOffset), TrueZDistance = Msin(yaw2 + cYawOffset)
+ Instead of finding the coord, you find the distance, then, you just do your subtraction after.
+ TrueXCoord = cx - TrueXDistance
+ TrueZCoord = cz - TrueZDistance
+
+There you go. You may have to correct for true z distance if going downward. However it may already be handled
+by the yaw2 offset.
+
+To find the distanceToCenter x and z, follow a simple thing.
+RobotLengthX = 18.0in.
+RobotWidthZ = 18.0in.
+To find this, we can find the camera to it. It has 8.00in. from camera to the back of the robot.
+Therefore, camera Z pos = RobotWidthZ - 8.00in = 10.00in.
+Now, remember center is Robotwidth/2, robotlength/2. Therefore, RobotCenter = 9.00in., 9.00in.
+Since The RobotZ coord of the camera is 11.75. And we are looking from down from center toward the camera,
+the z is 2.75. Because 10.00 - 9.00 = 1.00
+distanceToCenterZ (assuming down from center) = 1.00in.
+Now we need distanceToCenterX assuming right from center.
+Measuring, we get 8.00in. measuring from the center to the left. Therefore, since it is increasing to 18.0in.,
+it is only 8.00in. This is bc 8.00in. - 0.00in. = 8.00in. Therefore, we can now do the equation 8.00in. - 9.00in. =
+-1.00in.
+Therefore, distanceToCenterZ (assuming right from center) = -1.00in.
+Finally, we can calculate it at any given point :D
+
+However, there is actually an issue. remember the yaw equation.
+yaw2 = thetay - yaw - phiy or
+yaw2 = thetay + yaw - phiy depending on whether it is detected clockwise or counterclockwise.
+Well this actually wont work.
+This is bc yaw is from camera's point to tag. Therefore it can have a yaw of 25 degrees, yet be rotated 0 degrees.
+This equation will say it has like -25 degrees when the real robot spin is 0. Therefore, we need to make a clever solution
+to fix this problem.
+Lets define tcyaw as the tags orientation relative to the camera.
+The equation is just thetay - tcyaw - phiy.
+Now, how do we get tcyaw. Well, although there are probably some advanced math you can do to get it with what we are
+already given, there is no need, since there is an april tag function known as ftcPose.yaw which rather than returning
+yaw from camera to the tag, returns the yaw relative to the camera. What is the difference. ftcPose.bearing grabs the
+yaw from the camera to the tag. But, it returns yaw despite robot turn. it measures a positional vector rather than rotational.
+Though it does account for rotational as well. However, this one returns the calculated yaw not based on position, but rotation.
+
+However, this now incorporates a new issue (Also sorry if i keep adding on i am discovering this on the fly...)
+
+But look. Now you may be wondering. What about phiy? Phiy is used directly to find positional offset. However, what if
+our robot is rotated at an angle. Is phiy still 180 degrees. And the answer is no. So, therefore we still define
+yaw2 = thetay - tcyaw - phiy.
+But then we also need to replace phiy with a new variable. Lets call this originalPhiy.
+yaw2 = thetay - tcyaw - originialPhiy.
+phiy = originalPhiy + yaw2. (Assuming counterclockwise increases degrees).
+
+Now surely everything is accounted for.
+

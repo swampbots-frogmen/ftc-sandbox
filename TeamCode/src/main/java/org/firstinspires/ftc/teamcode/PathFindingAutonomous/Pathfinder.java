@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.PathFindingAutonomous;
 
-
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -75,8 +72,8 @@ public class Pathfinder {
 
 
 
-    public static Action pathfindToCoords(double x,double y, double heading, Pose2d startingPos, MecanumDrive drive) {
-        targetX = x;//Yes, i know y is x, but that is bc par wheels track x motion, but I want it to track y.
+    public static Action pathfindToCoords(double x, double y, double heading, Pose2d startingPos, MecanumDrive drive) {
+        targetX = x; //Yes, i know y is x, but that is bc par wheels track x motion, but I want it to track y.
         targetY = y;
         targetCenterX = targetX + (targetWidth / 2);
         targetCenterY = targetY + (targetLength / 2);
@@ -94,27 +91,15 @@ public class Pathfinder {
             return drive.actionBuilder(startingPos).build();
         }
 
+        double finalHeading = Math.toRadians(heading);
+        ArrayList<Pose2d> pathPoses = getPathPoses(finalHeading);
+
         TrajectoryActionBuilder builder = drive.actionBuilder(startingPos);
 
-        double finalHeading = Math.toRadians(heading);
-
-        // Standard RoadRunner Coordinate System Note:
-        // +X = Forward / Backward motion (lengthwise on field)
-        // +Y = Left / Right motion (towards Blue side / left)
-
-        // Loop through all target nodes after the starting node (index 0)
-        for (int i = 1; i < shortestPath.size(); i++) {
-            Node prev = shortestPath.get(i - 1);
-            Node next = shortestPath.get(i);
-
-            if (i == shortestPath.size() - 1) {
-                // Final destination: rotate to final target heading
-                builder = builder.strafeToLinearHeading(new Vector2d(next.x, next.y), finalHeading);
-            } else {
-                // Intermediate waypoints: face forward along travel direction
-                //double pathHeading = Math.atan2(next.y - prev.y, next.x - prev.x);
-                builder = builder.strafeToLinearHeading(new Vector2d(next.x, next.y),finalHeading);
-            }
+        // Loop through all target poses after the starting node (index 0)
+        for (int i = 1; i < pathPoses.size(); i++) {
+            Pose2d pose = pathPoses.get(i);
+            builder = builder.strafeToLinearHeading(new Vector2d(pose.position.x, pose.position.y), pose.heading);
         }
 
         return builder.build();
@@ -164,8 +149,6 @@ public class Pathfinder {
             double top = StopTopBounds.get(i);
             double right = StopRightBounds.get(i);
             double bottom = StopBottomBounds.get(i);
-
-
 
             nodes.add(new Node(left - nodeClearance, top - nodeClearance));
             nodes.add(new Node(right + nodeClearance, top - nodeClearance));
@@ -245,8 +228,8 @@ public class Pathfinder {
 
     private static Rectangle expandedStopBoundary(Rectangle stopBoundary, double paddingX, double paddingY) {
 
-        int startx = (int)(stopBoundary.x - (paddingX));
-        int starty = (int)(stopBoundary.y - (paddingY));
+        int startx = (int)(stopBoundary.x - paddingX);
+        int starty = (int)(stopBoundary.y - paddingY);
         int width = (int)(stopBoundary.width + paddingX*2);
         int height = (int)(stopBoundary.height + paddingY*2);
 
@@ -534,25 +517,51 @@ public class Pathfinder {
 
 
 
+    /**
+     * Returns a list of RoadRunner Pose2d waypoints (X, Y, and Heading)
+     * for the currently calculated shortest path.
+     */
+    public static ArrayList<Pose2d> getPathPoses(double finalTargetHeadingRadians) {
+        ArrayList<Pose2d> poses = new ArrayList<>();
 
+        if (shortestPath.isEmpty()) {
+            return poses;
+        }
+
+        for (int i = 0; i < shortestPath.size(); i++) {
+            Node current = shortestPath.get(i);
+            double heading = 0.0;
+
+            if (i < shortestPath.size() - 1) {
+                // Point towards the next node in the path
+                Node next = shortestPath.get(i + 1);
+                heading = Math.atan2(next.y - current.y, next.x - current.x);
+            } else {
+                // For the final destination node, use the requested target heading
+                heading = finalTargetHeadingRadians;
+            }
+
+            poses.add(new Pose2d(current.x, current.y, heading));
+        }
+
+        return poses;
+    }
 
 
     //This is required for Dijkstra's algorithm, and everything here and below is for it. Don't ask too much about what it is. It is just pathfinding with nodes pretty much.
 
     static class Node {
-
         double x;
         double y;
+        double heading; // Heading to face/arrive at this node (in radians)
 
         ArrayList<Edge> edges = new ArrayList<>();
 
         Node(double x, double y) {
-
             this.x = x;
             this.y = y;
-
+            this.heading = 0.0;
         }
-
     }
 
     static class Edge {//Also calculates the edges, allowing us to retrieve distance between each node.
@@ -835,6 +844,7 @@ public class Pathfinder {
         }
     }
 }
+
 class Rectangle {
     double x;
     double y;

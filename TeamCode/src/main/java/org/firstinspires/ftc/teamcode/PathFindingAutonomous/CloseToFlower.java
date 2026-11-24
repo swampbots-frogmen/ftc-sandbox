@@ -15,10 +15,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.AprilTagStuff.AprilTagVision;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 
-@Autonomous(name = "CloseToFlower")
+@Autonomous(name = "CloseToFlowerz")
 public class CloseToFlower extends LinearOpMode {
 
     static double robotLength = 18;
@@ -28,18 +30,26 @@ public class CloseToFlower extends LinearOpMode {
     static double robotCenterX = robotStartPosX + (robotWidth / 2);
     static double robotCenterY = robotStartPosY + (robotLength / 2);
 
+    private AprilTagVision vision = null;
+
     private DcMotorEx launcher = null;
     private DcMotor intake = null;
     private CRServo leftIntakeServo = null;
     private CRServo rightIntakeServo = null;
     private CRServo windmillServo = null;
+    private Servo pollenRamp = null;
 
     private MecanumDrive drive = null;
     private Pathfinder pathfind = null;
     private Pose2d currentPose = null;
 
-    public final int LAUNCHER_TARGET_VELOCITY = 1265; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 1255; //2571 RPM
+    public final int LAUNCHER_TARGET_VELOCITY = 1245; //2678 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 1235; //2571 RPM
+
+    public final String RedAudience = "RED AUDIENCE";
+    public final String RedScoring = "RED SCORING";
+    public final String BlueAudience = "BLUE AUDIENCE";
+    public final String BlueScoring = "BLUE SCORING";
 
     public boolean velocityReached = false;
 
@@ -51,6 +61,7 @@ public class CloseToFlower extends LinearOpMode {
         windmillServo = hardwareMap.get(CRServo.class, "windmillServo");
         leftIntakeServo = hardwareMap.get(CRServo.class, "left_intake_servo");
         rightIntakeServo = hardwareMap.get(CRServo.class, "right_intake_servo");
+        pollenRamp = hardwareMap.get(Servo.class, "pollenramp");
 
         intake.setZeroPowerBehavior(BRAKE);
 
@@ -65,7 +76,17 @@ public class CloseToFlower extends LinearOpMode {
         rightIntakeServo.setDirection(DcMotorSimple.Direction.FORWARD);
         windmillServo.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        Pose2d startingPose = new Pose2d(144-robotCenterX, 94-robotCenterY, Math.toRadians(0));
+        vision = new AprilTagVision(
+                hardwareMap,
+                -5.0,   // Forward offset (negative if mounted towards the back relative to center)
+                -7.0,   // Left offset (negative if left/right coordinate conventions require it)
+                17.25,  // Up offset (height of lens in inches)
+                180.0,  // Yaw (180 degrees because it's pointed at the back of the robot)
+                45.0,   // Pitch (45 degrees tilted up)
+                0.0     // Roll (0 if level sideways)
+        );
+
+        Pose2d startingPose = new Pose2d(144-robotCenterX, robotCenterY+51.5, Math.toRadians(0));
 
         drive = new MecanumDrive(hardwareMap, startingPose);
         drive.localizer.setPose(startingPose);
@@ -73,23 +94,28 @@ public class CloseToFlower extends LinearOpMode {
 
         pathfind = new Pathfinder();
 
-        waitForStart();
+        while (!isStarted() && !isStopRequested()) {
+            telemetry.addData("Camera Status", "Warming up / Ready");
+            telemetry.addData("Red Scoring Visible", vision.isTagVisible(RedScoring));
+            telemetry.addData("Blue Audience Visible", vision.isTagVisible(BlueAudience));
+            telemetry.update();
+            sleep(20);
+        }
 
         if (isStopRequested()) return;
-        sleep(10000);
-        launch();
+      //  if (vision.waitForTag(this,10000, RedScoring, BlueAudience)) {
+      //      launch();
+       // }
 
 
-        startIntake();
+
         pathfindTo(120-robotLength, 90-robotLength, 0);
-        driveDirectTo(142-robotLength, 100-robotLength, 25);
-        driveDirectTo(142-robotLength, 100-robotLength, 0);
-        driveDirectTo(142-robotLength, 100-robotLength, 25);
-        driveDirectTo(142-robotLength, 100-robotLength, 0);
-        sleep(1000);
-        stopIntake();
-        driveDirectTo(130-robotLength, 94-robotLength, 0);
-        pathfindTo(100, 134, 0);
+
+        //pathfindTo(110, 120-robotLength, 0); Gatorbots one.
+
+        pathfindTo(85, 115-robotLength, 0);
+
+
 
         while(!isStopRequested()){
             telemetry.addLine("Path finished");
@@ -108,7 +134,9 @@ public class CloseToFlower extends LinearOpMode {
          * holding down the right gamepad. If they are, then we want to start spinning up the launcher.
          * Otherwise, we start spinning the launcher down.
          */
-        while(!velocityReached) {
+        while(!velocityReached && opModeIsActive()) {
+
+
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
 
 
@@ -122,7 +150,7 @@ public class CloseToFlower extends LinearOpMode {
             if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
                 windmillServo.setPower(1);
                 velocityReached = true;
-                sleep(4000);
+                sleep(5000);
                 windmillServo.setPower(0);
                 launcher.setVelocity(0);
             } else {
